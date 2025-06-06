@@ -1,39 +1,25 @@
-# Install Zabbix Agent2 on Ubuntu
-Repositories for teaching purposes at SPOS DK
+# 📦 Install Zabbix Agent2 on Ubuntu – SPOS DK
+
+Repozitář pro výuku na SPOS DK – automatická instalace a konfigurace **Zabbix Agent2 (verze 7.0 LTS)** na Ubuntu pomocí Vagrantu.
 
 ![Ubuntu and ZabbixAgent2 OSY AI](../Images/osy-Ubuntu-ZabbixAgent2.webp)
 
-Repository pro vyuku na SPOS DK
+---
 
-## Automatická instalace Zabbix Agent2 na OS Linux Ubuntu
+## 🧰 Automatická instalace Zabbix Agent2
 
-- Vagrantfile obsahuje sekci pro aplikaci příkazů pro instalaci monitorovacího
-[Zabbix Agent2](https://www.zabbix.com/).
+Pomocí Vagrantu se vytvoří Ubuntu VM, nainstaluje se Zabbix Agent2 a automaticky se zaregistruje na Zabbix server **(Zabbix Appliance)** v síti `192.168.1.0/24`.
 
-### Instalace Zabbix Agent2
+---
 
-```console
-wget https://repo.zabbix.com/zabbix/6.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest+ubuntu22.04_all.deb
-dpkg -i zabbix-release_latest+ubuntu22.04_all.deb
+### ⚙️ Vagrantfile obsahuje:
 
-apt-get update
-apt-get install -y zabbix-agent2 zabbix-agent2-plugin-*
+- Definici boxu `ubuntu/jammy64`
+- Přesměrování portu 22 → 2202
+- Druhou síťovou kartu v režimu **intnet** s IP `192.168.1.3`
+- Automatické spuštění instalačních skriptů:
 
-systemctl enable zabbix-agent2
-systemctl start zabbix-agent2
-```
-
-### Konfigurace Zabbix Agent2
-
-```console
-joe /etc/zabbix/zabbix_agent2.conf
-...
-Hostname=ubuntu-8e714c18
-Server=enceladus.pfsense.cz
-ServerActive=enceladus.pfsense.cz
-Timeout=30
-HostMetadata=SPOS
-
-systemctl restart zabbix-agent2
-```
-...
+```ruby
+config.vm.network "private_network", ip: "192.168.1.3", virtualbox__intnet: true
+config.vm.provision "shell", path: "install-zabbix-agent2.sh"
+config.vm.provision "shell", path: "configure-zabbix-agent2.sh"

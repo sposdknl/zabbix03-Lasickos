@@ -1,24 +1,32 @@
-#!/usr/bin/env bash
+#!/bin/bash
+# install_zabbix_agent.sh
 
-# Instalace balicku net-tools
-sudo apt-get install -y net-tools
+set -e  # Ukončí skript při chybě
 
-# Stažení balíčku pro instalaci zabbix repo
-sudo wget https://repo.zabbix.com/zabbix/6.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest+ubuntu22.04_all.deb
+# Stažení a přidání Zabbix repozitáře (Zabbix 7.0 LTS)
+wget -q https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_7.0-1+ubuntu20.04_all.deb
+sudo dpkg -i zabbix-release_7.0-1+ubuntu20.04_all.deb
+sudo apt update
 
-# Instalace meta balíčku
-sudo dpkg -i zabbix-release_latest+ubuntu22.04_all.deb
+# Instalace Zabbix Agent2
+sudo apt install -y zabbix-agent2
 
-# Aktualizace repository
-sudo apt-get update
+# Konfigurace agenta
+sudo sed -i 's/^Server=.*/Server=192.168.1.2/' /etc/zabbix/zabbix_agent2.conf
+sudo sed -i 's/^ServerActive=.*/ServerActive=192.168.1.2/' /etc/zabbix/zabbix_agent2.conf
+sudo sed -i 's/^Hostname=.*/Hostname=ubuntu-spos/' /etc/zabbix/zabbix_agent2.conf
 
-# Instalace meta balíčku
-sudo apt-get install -y zabbix-agent2 zabbix-agent2-plugin-*
+# Přidání metadata pro autoregistraci
+if grep -q "^# HostMetadata=" /etc/zabbix/zabbix_agent2.conf; then
+    sudo sed -i 's/^# HostMetadata=.*/HostMetadata=SPOS/' /etc/zabbix/zabbix_agent2.conf
+else
+    echo "HostMetadata=SPOS" | sudo tee -a /etc/zabbix/zabbix_agent2.conf
+fi
 
-# Povoleni sluzby zabbix-agent2
+# Povolení a spuštění služby
 sudo systemctl enable zabbix-agent2
-
-# Restart sluzby zabbix-agent2
 sudo systemctl restart zabbix-agent2
 
-# EOF
+# Výpis stavu služby
+echo "✅ Zabbix Agent2 status:"
+systemctl status zabbix-agent2 --no-pager
